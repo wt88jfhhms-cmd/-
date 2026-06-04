@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영작 훈련소</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --accent: #c8ff00;
+    --accent2: #ff6b35;
+    --text: #e8e8f0;
+    --muted: #666680;
+    --border: #2a2a3a;
+    --correct: #00ff88;
+    --wrong: #ff4466;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,255,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,255,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px 20px 40px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+
+  .subtitle {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .day-badge {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 2px 8px;
+    letter-spacing: 1px;
+  }
+
+  /* progress */
+  .progress-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .progress-dot {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .progress-dot.done { background: var(--accent); }
+  .progress-dot.current { background: var(--accent2); }
+
+  /* question card */
+  .q-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .q-source {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .korean-sentence {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.65;
+    margin-bottom: 10px;
+    font-weight: 400;
+  }
+
+  .word-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    margin-bottom: 10px;
+  }
+
+  .word-box-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .word-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .word-chip:hover { border-color: var(--accent); background: rgba(200,255,0,0.05); }
+  .word-chip.used { opacity: 0.3; border-style: dashed; }
+
+  /* answer area */
+  .answer-area {
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent2);
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--surface);
+    cursor: text;
+    position: relative;
+  }
+
+  .answer-area:focus { outline: none; border-color: var(--accent2); }
+  .answer-area:empty::before {
+    content: '여기에 영작하세요...';
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .answer-area[contenteditable="false"] { cursor: default; }
+
+  /* buttons */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 8px 18px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 700;
+  }
+
+  .btn-primary:hover { background: #d4ff20; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+
+  /* feedback */
+  .feedback {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    animation: slideIn 0.3s ease;
+  }
+
+  .feedback.show { display: block; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .feedback-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .feedback-label.correct { color: var(--correct); }
+  .feedback-label.wrong { color: var(--wrong); }
+  .feedback-label.partial { color: var(--accent2); }
+
+  .model-answer {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1.7;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: rgba(200,255,0,0.05);
+    border-left: 2px solid var(--accent);
+  }
+
+  .feedback-notes {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .feedback-notes li {
+    margin-bottom: 5px;
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .feedback-notes li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent2);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .highlight-correct { color: var(--correct); }
+  .highlight-wrong { color: var(--wrong); background: rgba(255,68,102,0.1); padding: 1px 4px; }
+
+  /* score screen */
+  .score-screen {
+    display: none;
+    text-align: center;
+    padding: 60px 0;
+  }
+
+  .score-screen.show { display: block; }
+
+  .score-big {
+    font-family: 'Space Mono', monospace;
+    font-size: 80px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .score-label {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .score-detail {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 48px;
+  }
+
+  .score-item { text-align: center; }
+  .score-item-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .score-item-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+
+  /* loading */
+  .loading {
+    text-align: center;
+    padding: 80px 0;
+  }
+
+  .loading-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .q-card { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* streak */
+  .streak-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .streak-fire { color: var(--accent2); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="logo">ENGRAFT</div>
+      <div class="subtitle">2025 수능 6월 · 영작 훈련</div>
+    </div>
+    <div class="day-badge" id="dayBadge">DAY 1</div>
+  </header>
+
+  <div class="streak-info">
+    <span class="streak-fire">🔥</span>
+    <span id="streakText">연속 0일째</span>
+    <span style="margin-left:auto; color: var(--border)">|</span>
+    <span id="totalDone" style="margin-left:8px">총 0문제 완료</span>
+  </div>
+
+  <div class="progress-bar" id="progressBar"></div>
+
+  <div class="loading" id="loadingScreen">
+    <div class="loading-text">LOADING QUESTIONS...</div>
+  </div>
+
+  <div id="quizArea" style="display:none">
+    <div class="q-card" id="qCard">
+      <div class="q-number" id="qNumber">Q 01 / 05</div>
+      <div class="q-source" id="qSource">문항 번호</div>
+      <div class="korean-sentence" id="koreanSentence"></div>
+      <div class="word-box">
+        <div class="word-box-label">주어진 단어 (필요시 변형)</div>
+        <div class="words" id="wordChips"></div>
+      </div>
+      <div class="answer-area" id="answerArea" contenteditable="true" spellcheck="false"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="submitBtn" onclick="submitAnswer()">제출하기</button>
+        <button class="btn btn-secondary" onclick="clearAnswer()">지우기</button>
+      </div>
+      <div class="feedback" id="feedback">
+        <div class="feedback-label" id="feedbackLabel"></div>
+        <div class="model-answer" id="modelAnswer"></div>
+        <ul class="feedback-notes" id="feedbackNotes"></ul>
+        <div class="btn-row" style="margin-top:20px; margin-bottom:0">
+          <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">다음 문제 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="score-screen" id="scoreScreen">
+    <div class="score-big" id="scoreBig">0</div>
+    <div class="score-label">오늘의 점수</div>
+    <div class="score-detail">
+      <div class="score-item">
+        <div class="score-item-num" id="scoreCorrect">0</div>
+        <div class="score-item-label">정확</div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-num" id="scorePartial">0</div>
+        <div class="score-item-label">부분</div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-num" id="scoreWrong">0</div>
+        <div class="score-item-label">오답</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="restartToday()" style="margin: 0 auto; display:block">다시 풀기</button>
+  </div>
+</div>
+
+<script>
+// ─── 문제 데이터베이스 ───────────────────────────────────────────
+const QUESTIONS = [
+  // 20번
+  {
+    num: 20,
+    korean: "AI의 영향력이 확산됨에 따라, 많은 사람들은 인간의 의사결정 역할이 줄어든 미래를 상상하기 시작한다.",
+    words: ["as", "the", "influence", "of", "AI", "expand", "many", "begin", "to", "imagine", "a", "future", "with", "diminish", "role", "for", "human", "decision", "making"],
+    answer: "As the influence of AI expands, many begin to imagine a future with a diminished role for human decision making.",
+    notes: [
+      "as절: 시간/비례의 접속사 → As + S + V",
+      "expands: 현재시제 단수 주어 일치",
+      "diminished: 과거분사가 명사 수식 → a diminished role",
+      "human decision making: 복합명사, 관사 없음"
+    ]
+  },
+  {
+    num: 20,
+    korean: "우리 자신의 오류 가능성을 인정하는 것을 통해, 우리는 AI의 성장과 활용을 감독하는 자로서 스스로를 위치시켜야 한다.",
+    words: ["in", "light", "of", "humanity", "acceptance", "our", "own", "fallibility", "we", "utilize", "capacity", "overcome", "failure", "position", "ourselves", "as", "overseer", "AI", "growth", "and", "application"],
+    answer: "In light of humanity's acceptance of our own fallibility, we utilize our capacity to overcome such failures to position ourselves as the overseers of AI's growth and applications.",
+    notes: [
+      "humanity's acceptance: 소유격 필수",
+      "capacity to-V: ~할 능력",
+      "position ourselves as: ~로서 자신을 위치시키다",
+      "overseers: 복수형, the overseers of AI's growth"
+    ]
+  },
+  // 21번
+  {
+    num: 21,
+    korean: "번아웃을 스펙트럼으로 생각하는 것은 이 문제를 해결한다: 번아웃을 주장하지만 그것에 의해 쇠약해지지 않은 사람들은 단순히 부분적이거나 덜 심각한 형태를 겪고 있는 것이다.",
+    words: ["think", "about", "burnout", "as", "a", "spectrum", "solve", "this", "problem", "those", "who", "claim", "but", "not", "debilitate", "by", "it", "are", "simply", "deal", "with", "partial", "or", "less-severe", "form", "of"],
+    answer: "Thinking about burnout as a spectrum solves this problem; those who claim burnout but are not debilitated by it are simply dealing with a partial or less-severe form of it.",
+    notes: [
+      "동명사 주어: Thinking about ~ solves (단수 동사)",
+      "those who: ~하는 사람들",
+      "debilitated: 수동 과거분사 → are not debilitated by",
+      "deal with → dealing with (진행형)"
+    ]
+  },
+  {
+    num: 21,
+    korean: "만약 번아웃과 그렇지 않은 상태 사이에 명확한 선이 있다면, 전구에서처럼, 우리는 여전히 자신의 일을 유능하게 해내는 사람들을 분류할 좋은 방법이 없다.",
+    words: ["if", "there", "be", "a", "clear", "line", "between", "burned", "out", "and", "not", "as", "there", "be", "with", "a", "lightbulb", "then", "we", "have", "no", "good", "way", "to", "categorize", "people", "who", "say", "they", "but", "still", "manage", "to", "do", "their", "work", "competently"],
+    answer: "If there is a clear line between burned out and not, as there is with a lightbulb, then we have no good way to categorize people who say they are burned out but still manage to do their work competently.",
+    notes: [
+      "there is: 존재구문 단수",
+      "as there is with: 비교/유사 표현",
+      "people who say they are burned out: 관계사절",
+      "manage to-V: 용케 ~해내다"
+    ]
+  },
+  // 22번
+  {
+    num: 22,
+    korean: "모든 사람이 말하고 들을 수 있다는 사실은 윤리적으로 수용되어야 했고, 그것은 대략적인 평등주의를 통해서였다.",
+    words: ["the", "fact", "that", "everyone", "be", "going", "to", "be", "able", "to", "speak", "and", "listen", "have", "to", "accommodate", "ethically", "and", "it", "be", "via", "a", "rough", "egalitarianism"],
+    answer: "The fact that everyone was going to be able to speak and listen had to be accommodated ethically, and it was via a rough egalitarianism.",
+    notes: [
+      "the fact that: 동격절",
+      "had to be accommodated: 수동태 조동사",
+      "it was via: 도구/방법 표현"
+    ]
+  },
+  {
+    num: 22,
+    korean: "말과 듣기에 대한 평등한 접근은 재산이 공동으로 소유되어야 한다는 개념을 촉진했다.",
+    words: ["equal", "access", "to", "speech", "and", "hearing", "promote", "the", "notion", "that", "property", "should", "hold", "in", "common"],
+    answer: "Equal access to speech and hearing promoted the notion that property should be held in common.",
+    notes: [
+      "access to: ~에 대한 접근",
+      "the notion that: 동격절",
+      "should be held in common: 수동태 조동사"
+    ]
+  },
+  // 23번
+  {
+    num: 23,
+    korean: "자본주의의 영향 하에서 단어들이 의미 있는 연상으로부터 분리되는 경향은 '지시 대상의 쇠퇴'라고 불리는 것의 명확한 사례이다.",
+    words: ["the", "tendency", "of", "words", "under", "the", "influence", "of", "capitalism", "become", "separate", "from", "meaningful", "association", "be", "clearly", "a", "case", "of", "what", "call", "the", "decline", "of", "the", "referentials"],
+    answer: "The tendency of words under the influence of capitalism to become separated from meaningful associations is clearly a case of what has been called 'the decline of the referentials.'",
+    notes: [
+      "tendency to-V: ~하는 경향",
+      "become separated from: ~로부터 분리되다 (수동)",
+      "what has been called: 관계대명사 what + 수동완료"
+    ]
+  },
+  {
+    num: 23,
+    korean: "새로운 정의들은 신흥 산업 식품 체계의 필요를 더 잘 충족시켰는데, 그것은 관습적인 의미와 기대에 부합하는 식품을 공급할 수 없었다.",
+    words: ["the", "new", "definition", "better", "serve", "the", "need", "of", "the", "emerge", "industrial", "food", "system", "which", "could", "not", "supply", "food", "that", "match", "customary", "meaning", "and", "expectation"],
+    answer: "The new definitions better served the needs of the emerging industrial food system, which could not supply foods that matched customary meanings and expectations.",
+    notes: [
+      "emerging: 현재분사가 명사 수식",
+      "which: 계속적 용법 관계대명사 (앞 절 전체 선행사)",
+      "that matched: 목적격 관계대명사절"
+    ]
+  },
+  // 24번
+  {
+    num: 24,
+    korean: "그리스인과 로마인들은 모델링 그림자에서 투영 그림자로의 전환을 처음으로 이루었는데, 이 관행은 일관된 광원, 고정된 시점, 기하학적 투영에 대한 이해를 내포했다.",
+    words: ["Greeks", "and", "Romans", "be", "the", "first", "to", "make", "the", "transition", "from", "model", "shadow", "to", "cast", "shadow", "a", "practice", "that", "imply", "a", "consistent", "light", "source", "a", "fix", "point", "of", "view", "and", "an", "understand", "of", "geometric", "projection"],
+    answer: "Greeks and Romans were the first to make the transition from modeling shadows to cast shadows, a practice that implied a consistent light source, a fixed point of view, and an understanding of geometric projection.",
+    notes: [
+      "the first to-V: 처음으로 ~한",
+      "a practice that: 동격 명사구 + 관계사절",
+      "implied: 과거형",
+      "fixed: 형용사 (과거분사), understanding: 동명사→명사화"
+    ]
+  },
+  {
+    num: 24,
+    korean: "그림자 묘사의 관행은 예술가들과 이론가들이 그림자 표현의 중요성에 대한 지속적인 논쟁에 참여해 오면서, 그것에 대한 비판적 분석과 함께 발전해 왔다.",
+    words: ["the", "practice", "of", "portray", "shadow", "evolve", "along", "with", "critical", "analysis", "of", "them", "as", "artist", "and", "theoretician", "engage", "in", "an", "ongoing", "debate", "about", "the", "significance", "of", "shadow", "representation"],
+    answer: "The practice of portraying shadows has evolved along with critical analysis of them, as artists and theoreticians have engaged in an ongoing debate about the significance of shadow representation.",
+    notes: [
+      "has evolved: 현재완료 (지속)",
+      "along with: ~와 함께",
+      "as: 시간/동시 접속사",
+      "have engaged in: 현재완료 진행적 의미"
+    ]
+  },
+  // 29번
+  {
+    num: 29,
+    korean: "더 어려운 불러오기는 그 불러오기 행위 자체가 성공적이라는 전제 하에, 더 나은 학습으로 이어진다.",
+    words: ["more", "difficult", "retrieval", "lead", "to", "better", "learning", "provide", "the", "act", "of", "retrieval", "be", "itself", "successful"],
+    answer: "More difficult retrieval leads to better learning, provided the act of retrieval is itself successful.",
+    notes: [
+      "leads to: 단수 주어 + 현재시제",
+      "provided (that): ~라는 전제 하에 (분사구문 관용표현)",
+      "is itself: 강조 재귀"
+    ]
+  },
+  {
+    num: 29,
+    korean: "단서 없이 학생들이 기억할 수 있는 한 최대한 많이 회상해야 하는 자유 회상 시험은 학생들에게 기억해야 할 것에 대한 힌트를 주는 단서 회상 시험보다 더 나은 보유력을 가져오는 경향이 있다.",
+    words: ["free", "recall", "test", "in", "which", "student", "need", "to", "recall", "as", "much", "as", "they", "can", "remember", "without", "prompt", "tend", "to", "result", "in", "better", "retention", "than", "cue", "recall", "test", "in", "which", "student", "give", "hint", "about", "what", "they", "need", "to", "remember"],
+    answer: "Free recall tests, in which students need to recall as much as they can remember without prompting, tend to result in better retention than cued recall tests, in which students are given hints about what they need to remember.",
+    notes: [
+      "in which: 전치사+관계대명사 (두 번 사용)",
+      "as much as they can: 최대한 많이",
+      "prompting: 동명사",
+      "are given hints: 수동태 (give → are given)"
+    ]
+  },
+  // 30번
+  {
+    num: 30,
+    korean: "외부 통제가 두드러질수록, 그 사람은 자신의 행동에 있어 단순히 외부적으로 조절되거나 투입될 가능성이 더 높다.",
+    words: ["the", "more", "salient", "the", "external", "control", "over", "a", "person", "behavior", "the", "more", "the", "person", "be", "likely", "to", "merely", "externally", "regulate", "or", "introject", "in", "his", "or", "her", "action"],
+    answer: "The more salient the external control over a person's behavior, the more the person is likely to be merely externally regulated or introjected in his or her actions.",
+    notes: [
+      "the 비교급 ~, the 비교급 ~: 비례 구문",
+      "a person's behavior: 소유격",
+      "regulated or introjected: 수동태 병렬"
+    ]
+  },
+  {
+    num: 30,
+    korean: "따라서, 자녀에게 숙제를 하도록 보상하거나 강요하거나 달래는 부모들은 보상받거나 달래지거나 강요될 때만 그렇게 하는 자녀를 가질 가능성이 더 높다.",
+    words: ["thus", "parent", "who", "reward", "force", "or", "cajole", "their", "child", "to", "do", "homework", "be", "more", "likely", "to", "have", "a", "child", "who", "do", "so", "only", "when", "reward", "cajole", "or", "force"],
+    answer: "Thus, parents who reward, force, or cajole their child to do homework are more likely to have a child who does so only when rewarded, cajoled, or forced.",
+    notes: [
+      "who reward, force, or cajole: 주격 관계사절 병렬",
+      "are more likely to: ~할 가능성이 더 높다",
+      "when rewarded, cajoled, or forced: 수동 분사 병렬 (부사절 축약)"
+    ]
+  },
+  // 31번
+  {
+    num: 31,
+    korean: "아날로그 환경에서 정보 내용이 물리적 매체에 풀 수 없게 고정되어 있는 것과 달리, 디지털 환경에서 매체는 메시지의 일부가 아니다.",
+    words: ["this", "be", "clear", "in", "the", "analog", "environment", "where", "the", "information", "content", "be", "inextricably", "fix", "to", "the", "physical", "medium", "in", "the", "digital", "environment", "the", "medium", "be", "not", "part", "of", "the", "message"],
+    answer: "This is clear in the analog environment where the information content is inextricably fixed to the physical medium. In the digital environment, the medium is not part of the message.",
+    notes: [
+      "where: 관계부사 (선행사: the analog environment)",
+      "is inextricably fixed to: 수동태 + 부사",
+      "not part of the message: 관사 the 필수"
+    ]
+  },
+  {
+    num: 31,
+    korean: "물리적 운반체가 필요하지만, 원본 매체를 읽을 수 있는 한, 비트 완벽한 복사본이 다른 장치에서 저렴하고 쉽게 만들어질 수 있다.",
+    words: ["a", "physical", "carrier", "be", "necessary", "but", "as", "long", "as", "the", "source", "media", "can", "read", "bit-perfect", "copy", "can", "make", "cheaply", "and", "easily", "on", "other", "device"],
+    answer: "A physical carrier is necessary, but as long as the source media can be read, bit-perfect copies can be made cheaply and easily on other devices.",
+    notes: [
+      "as long as: ~하는 한 (조건)",
+      "can be read: 수동태 조동사",
+      "can be made: 수동태 조동사",
+      "copies: 복수형"
+    ]
+  },
+  // 32번
+  {
+    num: 32,
+    korean: "독창적이지만 유용하지 않은 아이디어는 무관하고, 유용하지만 독창적이지 않은 아이디어는 주목할 만하지 않다.",
+    words: ["idea", "that", "be", "original", "but", "not", "useful", "be", "irrelevant", "and", "idea", "that", "be", "useful", "but", "not", "original", "be", "unremarkable"],
+    answer: "Ideas that are original but not useful are irrelevant, and ideas that are useful but not original are unremarkable.",
+    notes: [
+      "that are: 주격 관계대명사 (두 번)",
+      "but not: 병렬 부정",
+      "are irrelevant / are unremarkable: 복수 주어 일치"
+    ]
+  },
+  {
+    num: 32,
+    korean: "문제를 성공적으로 해결하거나 혁신하기 위해서는 정말로 효과가 있고 이전 접근 방식보다 더 잘 작동하는 한두 개의 좋은 아이디어가 필요하다.",
+    words: ["to", "successfully", "solve", "problem", "or", "innovate", "require", "one", "or", "a", "few", "good", "idea", "that", "really", "work", "and", "work", "better", "than", "previous", "approach"],
+    answer: "To successfully solve problems or innovate requires one or a few good ideas that really work, and work better than previous approaches.",
+    notes: [
+      "to-V 명사적 용법이 주어: 단수 동사 requires",
+      "that really work: 주격 관계사절",
+      "work better than: 비교급"
+    ]
+  },
+  // 33번
+  {
+    num: 33,
+    korean: "주관적으로 가진 믿음은 그 믿음이 사회적으로 공유될 때 객관성의 지위를 얻는다.",
+    words: ["a", "subjectively", "hold", "belief", "attain", "the", "status", "of", "objectivity", "when", "the", "belief", "be", "socially", "share"],
+    answer: "A subjectively held belief attains the status of objectivity when the belief is socially shared.",
+    notes: [
+      "subjectively held: 부사+과거분사가 명사 수식",
+      "attains: 단수 주어 현재시제",
+      "is socially shared: 수동태"
+    ]
+  },
+  {
+    num: 33,
+    korean: "주관적 경험과 환경은 '결합된 시스템'으로 작동하며, 이 결합된 시스템은 그 자체로 완전한 인지 시스템으로 볼 수 있다.",
+    words: ["subjective", "experience", "and", "the", "environment", "act", "as", "a", "couple", "system", "this", "couple", "system", "can", "see", "as", "a", "complete", "cognitive", "system", "of", "its", "own"],
+    answer: "Subjective experience and the environment act as a 'coupled system.' This coupled system can be seen as a complete cognitive system of its own.",
+    notes: [
+      "act as: ~로서 작동하다",
+      "coupled: 과거분사 형용사",
+      "can be seen as: 수동태 조동사 + 전치사"
+    ]
+  },
+  // 34번
+  {
+    num: 34,
+    korean: "음악 교육의 많은 부분이 이러한 듣기 과정을 발전시키고 풍부하게 하는 데 헌신되어 있으며, 따라서 그것을 변화시킬 가능성이 높다.",
+    words: ["a", "large", "part", "of", "music", "education", "devote", "to", "develop", "and", "enrich", "and", "therefore", "likely", "change", "these", "listen", "process"],
+    answer: "A large part of music education is devoted to developing and enriching (and therefore likely changing) these listening processes.",
+    notes: [
+      "is devoted to: 수동태 + to (전치사)",
+      "to developing and enriching: 전치사 뒤 동명사",
+      "listening processes: 동명사가 명사 수식"
+    ]
+  },
+  {
+    num: 34,
+    korean: "일화적 증거에 따르면, 대부분의 사람들은 전형적인 민요나 클래식 곡에서 박자를 찾을 수 있다.",
+    words: ["anecdotal", "evidence", "suggest", "for", "example", "that", "most", "people", "be", "able", "to", "find", "the", "beat", "in", "a", "typical", "folk", "song", "or", "classical", "piece"],
+    answer: "Anecdotal evidence suggests, for example, that most people are able to 'find the beat' in a typical folk song or classical piece.",
+    notes: [
+      "suggests that: 동사 + that절",
+      "are able to: ~할 수 있다",
+      "a typical folk song or classical piece: 관사 a"
+    ]
+  },
+  // 38번
+  {
+    num: 38,
+    korean: "오염자는 따라서 잔여 배출량의 단위당 세금보다 단위 삭감당 비용이 덜 드는 어떤 방법으로든 배출량을 줄일 유인을 가진다.",
+    words: ["the", "polluter", "thus", "have", "an", "incentive", "to", "reduce", "emission", "in", "any", "manner", "that", "be", "less", "costly", "per", "unit", "of", "abatement", "than", "the", "tax", "on", "each", "unit", "of", "residual", "emission"],
+    answer: "The polluter thus has an incentive to reduce emissions in any manner that is less costly per unit of abatement than the tax on each unit of residual emissions.",
+    notes: [
+      "has an incentive to-V: ~할 유인을 가지다",
+      "in any manner that: 관계사절 수식",
+      "less costly than: 비교급"
+    ]
+  },
+  {
+    num: 38,
+    korean: "연속적인 배출량 측정은 특히 많은 별개의 배출원이 있는 경우 비용이 많이 들 수 있으며, 많은 오염 문제에 있어 이것은 배출량의 직접 과세에 대한 주요 억제 요인이 될 수 있다.",
+    words: ["continuous", "emission", "measurement", "can", "be", "costly", "particularly", "where", "there", "be", "many", "separate", "source", "of", "emission", "and", "for", "many", "pollution", "problem", "this", "may", "be", "a", "major", "disincentive", "to", "direct", "taxation", "of", "emission"],
+    answer: "Continuous emissions measurement can be costly, particularly where there are many separate sources of emissions, and for many pollution problems this may be a major disincentive to direct taxation of emissions.",
+    notes: [
+      "where there are: 관계부사 where",
+      "sources: 복수형",
+      "a major disincentive to: ~에 대한 주요 억제 요인"
+    ]
+  },
+  // 39번
+  {
+    num: 39,
+    korean: "고도로 표현주의적인 작품에서, 새로운 문체적 장치들은 주제와 불화하는 방식으로 작동하여 불안한 분위기를 만들어낸다.",
+    words: ["in", "highly", "expressionist", "work", "novel", "stylistic", "device", "work", "in", "an", "inharmonious", "manner", "against", "the", "subject", "matter", "thereby", "create", "a", "disquiet", "atmosphere"],
+    answer: "In highly expressionist works, novel stylistic devices work in an inharmonious manner against the subject matter thereby creating a disquieting atmosphere.",
+    notes: [
+      "novel: 여기서는 '새로운' (형용사)",
+      "thereby creating: 결과 분사구문",
+      "disquieting: 현재분사 형용사 (불안하게 만드는)"
+    ]
+  },
+  {
+    num: 39,
+    korean: "일상 생활의 '실용적 태도'와 '미학적 태도' 사이를 전환할 수 있는 능력은 균형 잡힌 삶에 필수적이다.",
+    words: ["an", "ability", "to", "switch", "between", "the", "pragmatic", "attitude", "of", "everyday", "life", "and", "an", "aesthetic", "attitude", "be", "fundamental", "to", "a", "balance", "life"],
+    answer: "An ability to switch between the 'pragmatic attitude' of everyday life and an 'aesthetic attitude' is fundamental to a balanced life.",
+    notes: [
+      "an ability to-V: ~할 능력",
+      "switch between A and B: A와 B 사이를 전환하다",
+      "is fundamental to: ~에 필수적이다",
+      "balanced: 과거분사 형용사"
+    ]
+  },
+  // 40번
+  {
+    num: 40,
+    korean: "불확실한 원천으로부터 생계를 얻는 인구의 많은 부분을 가진 국가들은 직접적인 공공 개입을 포함하는 특별한 권리 보호 메커니즘 없이는 기근을 예방하기를 바랄 수 없다.",
+    words: ["country", "where", "a", "large", "part", "of", "the", "population", "derive", "their", "livelihood", "from", "uncertain", "source", "cannot", "hope", "to", "prevent", "famine", "without", "specialize", "entitlement", "protection", "mechanism", "involve", "direct", "public", "intervention"],
+    answer: "Countries where a large part of the population derive their livelihood from uncertain sources cannot hope to prevent famines without specialized entitlement protection mechanisms involving direct public intervention.",
+    notes: [
+      "where: 관계부사",
+      "derive their livelihood from: ~로부터 생계를 얻다",
+      "cannot hope to-V: ~하기를 바랄 수 없다",
+      "specialized: 과거분사 형용사",
+      "involving: 현재분사 후치 수식"
+    ]
+  },
+  {
+    num: 40,
+    korean: "이 국가들의 실질적인 성취는 위기 시에 자국 인구에게 직접적인 공공 지원을 제공한 데 있다.",
+    words: ["the", "real", "achievement", "of", "these", "country", "lie", "in", "have", "provide", "direct", "public", "support", "to", "their", "population", "in", "time", "of", "crisis"],
+    answer: "The real achievements of these countries lie in having provided direct public support to their populations in times of crisis.",
+    notes: [
+      "lie in: ~에 있다",
+      "in having provided: 전치사 + 완료 동명사 (과거 사실 강조)",
+      "in times of crisis: 복수형 관용표현"
+    ]
+  }
+];
+
+// ─── 상태 ────────────────────────────────────────────────────────
+let todayQuestions = [];
+let currentIdx = 0;
+let results = { correct: 0, partial: 0, wrong: 0 };
+let streak = 0;
+let totalDone = 0;
+
+function getStorageKey(key) {
+  return 'engraft_' + key;
+}
+
+function loadState() {
+  try {
+    streak = parseInt(localStorage.getItem(getStorageKey('streak')) || '0');
+    totalDone = parseInt(localStorage.getItem(getStorageKey('total')) || '0');
+    const lastDate = localStorage.getItem(getStorageKey('lastDate'));
+    const today = new Date().toDateString();
+    if (lastDate && lastDate !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (lastDate !== yesterday.toDateString()) streak = 0;
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(getStorageKey('streak'), streak);
+    localStorage.setItem(getStorageKey('total'), totalDone);
+    localStorage.setItem(getStorageKey('lastDate'), new Date().toDateString());
+  } catch(e) {}
+}
+
+function getDayNumber() {
+  try {
+    const start = localStorage.getItem(getStorageKey('startDate'));
+    if (!start) {
+      localStorage.setItem(getStorageKey('startDate'), new Date().toDateString());
+      return 1;
+    }
+    const diff = Math.floor((new Date() - new Date(start)) / (1000*60*60*24));
+    return diff + 1;
+  } catch(e) { return 1; }
+}
+
+// ─── 초기화 ──────────────────────────────────────────────────────
+function init() {
+  loadState();
+  document.getElementById('dayBadge').textContent = 'DAY ' + getDayNumber();
+  document.getElementById('streakText').textContent = '연속 ' + streak + '일째';
+  document.getElementById('totalDone').textContent = '총 ' + totalDone + '문제 완료';
+
+  // 랜덤 5문제
+  const shuffled = [...QUESTIONS].sort(() => Math.random() - 0.5);
+  todayQuestions = shuffled.slice(0, 5);
+
+  buildProgress();
+  setTimeout(() => {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('quizArea').style.display = 'block';
+    showQuestion();
+  }, 800);
+}
+
+function buildProgress() {
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i === 0 ? ' current' : '');
+    dot.id = 'pdot' + i;
+    bar.appendChild(dot);
+  }
+}
+
+function updateProgress() {
+  for (let i = 0; i < 5; i++) {
+    const dot = document.getElementById('pdot' + i);
+    if (i < currentIdx) dot.className = 'progress-dot done';
+    else if (i === currentIdx) dot.className = 'progress-dot current';
+    else dot.className = 'progress-dot';
+  }
+}
+
+function showQuestion() {
+  const q = todayQuestions[currentIdx];
+  document.getElementById('qNumber').textContent = 'Q ' + String(currentIdx+1).padStart(2,'0') + ' / 05';
+  document.getElementById('qSource').textContent = '문항 ' + q.num + '번 지문';
+  document.getElementById('koreanSentence').textContent = q.korean;
+
+  // 단어 칩
+  const chipsEl = document.getElementById('wordChips');
+  chipsEl.innerHTML = '';
+  const shuffledWords = [...q.words].sort(() => Math.random() - 0.5);
+  shuffledWords.forEach(w => {
+    const chip = document.createElement('div');
+    chip.className = 'word-chip';
+    chip.textContent = w;
+    chip.onclick = () => insertWord(w, chip);
+    chipsEl.appendChild(chip);
+  });
+
+  // 초기화
+  const area = document.getElementById('answerArea');
+  area.textContent = '';
+  area.contentEditable = 'true';
+  document.getElementById('feedback').classList.remove('show');
+  document.getElementById('submitBtn').disabled = false;
+  updateProgress();
+}
+
+function insertWord(word, chip) {
+  const area = document.getElementById('answerArea');
+  const text = area.textContent;
+  area.textContent = text + (text && !text.endsWith(' ') ? ' ' : '') + word;
+  chip.classList.add('used');
+  // place cursor at end
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(area);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function clearAnswer() {
+  document.getElementById('answerArea').textContent = '';
+  document.querySelectorAll('.word-chip').forEach(c => c.classList.remove('used'));
+}
+
+function normalize(str) {
+  return str.toLowerCase()
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"')
+    .replace(/[.,;:!?]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function scoreAnswer(userAns, modelAns) {
+  const u = normalize(userAns);
+  const m = normalize(modelAns);
+  if (u === m) return 'correct';
+
+  // word overlap check
+  const uWords = new Set(u.split(' '));
+  const mWords = m.split(' ');
+  const overlap = mWords.filter(w => uWords.has(w)).length;
+  const ratio = overlap / mWords.length;
+  if (ratio >= 0.75) return 'partial';
+  return 'wrong';
+}
+
+function submitAnswer() {
+  const userAns = document.getElementById('answerArea').textContent.trim();
+  if (!userAns) return;
+
+  const q = todayQuestions[currentIdx];
+  const score = scoreAnswer(userAns, q.answer);
+
+  document.getElementById('answerArea').contentEditable = 'false';
+  document.getElementById('submitBtn').disabled = true;
+
+  const fb = document.getElementById('feedback');
+  const label = document.getElementById('feedbackLabel');
+  const model = document.getElementById('modelAnswer');
+  const notes = document.getElementById('feedbackNotes');
+
+  if (score === 'correct') {
+    label.textContent = '✓ CORRECT';
+    label.className = 'feedback-label correct';
+    results.correct++;
+  } else if (score === 'partial') {
+    label.textContent = '△ PARTIAL — 모범 답안 확인';
+    label.className = 'feedback-label partial';
+    results.partial++;
+  } else {
+    label.textContent = '✗ INCORRECT — 모범 답안 확인';
+    label.className = 'feedback-label wrong';
+    results.wrong++;
+  }
+
+  model.textContent = q.answer;
+  notes.innerHTML = q.notes.map(n => `<li>${n}</li>`).join('');
+
+  // update next button text
+  document.getElementById('nextBtn').textContent =
+    currentIdx < 4 ? '다음 문제 →' : '결과 보기 →';
+
+  fb.classList.add('show');
+  fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function nextQuestion() {
+  if (currentIdx < 4) {
+    currentIdx++;
+    document.getElementById('feedback').classList.remove('show');
+    showQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    showScore();
+  }
+}
+
+function showScore() {
+  totalDone += 5;
+  streak++;
+  saveState();
+
+  document.getElementById('quizArea').style.display = 'none';
+  const score = document.getElementById('scoreScreen');
+  score.classList.add('show');
+
+  const pct = Math.round((results.correct + results.partial * 0.5) / 5 * 100);
+  document.getElementById('scoreBig').textContent = pct + '%';
+  document.getElementById('scoreCorrect').textContent = results.correct;
+  document.getElementById('scorePartial').textContent = results.partial;
+  document.getElementById('scoreWrong').textContent = results.wrong;
+
+  document.getElementById('streakText').textContent = '연속 ' + streak + '일째';
+  document.getElementById('totalDone').textContent = '총 ' + totalDone + '문제 완료';
+
+  updateProgress();
+  for (let i = 0; i < 5; i++) {
+    document.getElementById('pdot'+i).className = 'progress-dot done';
+  }
+}
+
+function restartToday() {
+  currentIdx = 0;
+  results = { correct: 0, partial: 0, wrong: 0 };
+  const shuffled = [...QUESTIONS].sort(() => Math.random() - 0.5);
+  todayQuestions = shuffled.slice(0, 5);
+  buildProgress();
+  document.getElementById('scoreScreen').classList.remove('show');
+  document.getElementById('quizArea').style.display = 'block';
+  showQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) submitAnswer();
+});
+
+init();
+</script>
+</body>
+</html>
